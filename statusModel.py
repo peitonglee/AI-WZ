@@ -64,10 +64,10 @@ class Bottleneck(nn.Module):
         # 实线残差结构第2层3×3卷积stride=1，而虚线残差结构第2层3×3卷积stride=2,因此出入参数stride=stride
         self.bn2 = nn.BatchNorm2d(width)
         # -----------------------------------------
-        self.conv3 = nn.Conv2d(in_channels=width, out_channels=out_channel*self.expansion,
+        self.conv3 = nn.Conv2d(in_channels=width, out_channels=out_channel * self.expansion,
                                kernel_size=1, stride=1, bias=False)  # unsqueeze channels
         # 第3层卷积层步距都为1，但是第3层卷积核个数为第1层和第2层卷积核个数的4倍，则卷积核个数out_channels=out_channel*self.expansion
-        self.bn3 = nn.BatchNorm2d(out_channel*self.expansion)  # BN层输入卷积层深度等于卷积层3输出特征矩阵的深度
+        self.bn3 = nn.BatchNorm2d(out_channel * self.expansion)  # BN层输入卷积层深度等于卷积层3输出特征矩阵的深度
         self.relu = nn.ReLU(inplace=True)
         self.downsample = downsample
 
@@ -185,6 +185,7 @@ def resnet50(num_classes=1000, include_top=True):
     # https://download.pytorch.org/models/resnet50-19c8e357.pth
     return ResNet(Bottleneck, [3, 4, 6, 3], num_classes=num_classes, include_top=include_top)
     # 对于resnet50，block选用Bottleneck，残差层个数分别是[3,4,6,3]。
+
 
 def resnet101(num_classes=1000, include_top=True):
     # https://download.pytorch.org/models/resnet101-5d3b4d8f.pth

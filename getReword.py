@@ -14,15 +14,16 @@ from statusModel import resnet34
 from torchvision import transforms
 
 
-
 class GetRewordUtil():
     def __init__(self):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.model = resnet34(num_classes=12).to(self.device)
         self.load_model("models/resNet34_13.pth")
 
-        self.class_indict = ["readInfo", "backHome", "killHero", "attackSmallDragon", "attackBigDragon", "attackEnemyCreeps",
-                              "protectedOurSideCreeps", "attackEnemyMonster", "attackOurSideMonster", "attackEnemyTower", "protectedOurSideTower", "damageByTower"]
+        self.class_indict = ["readInfo", "backHome", "killHero", "attackSmallDragon", "attackBigDragon",
+                             "attackEnemyCreeps",
+                             "protectedOurSideCreeps", "attackEnemyMonster", "attackOurSideMonster", "attackEnemyTower",
+                             "protectedOurSideTower", "damageByTower"]
 
         # 全局状态
         self.globalInfo = GlobalInfo()
@@ -164,7 +165,8 @@ class GetRewordUtil():
             rewordResult = -1
 
         if self.globalInfo.is_back_home_over():
-            action1_logits, angle1_logits, action2_logits, type2_logits, angle2_logits, duration2_logits = split_actions(self.globalInfo.get_value("action"))
+            action1_logits, angle1_logits, action2_logits, type2_logits, angle2_logits, duration2_logits = split_actions(
+                self.globalInfo.get_value("action"))
 
             # 左手的操作
             # 获取最可能的action
@@ -185,7 +187,6 @@ class GetRewordUtil():
 
         return rewordResult
 
-
     def check_finish(self, image):
         text_sys = TextSystem()
         res = text_sys.detect_and_ocr(image)
@@ -202,7 +203,6 @@ class GetRewordUtil():
                 class_name = 'failed'
                 break
         return done, class_name
-
 
     def get_reword(self, image_path, isFrame):
         if isFrame:
@@ -226,7 +226,7 @@ class GetRewordUtil():
             for future in as_completed([future_class_name, future_md_class_name]):
                 end_time = time.time()
                 if future == future_class_name:
-                   done, class_name = future.result()
+                    done, class_name = future.result()
                     # print(f"tp运行时间: {end_time - start_time_class_name:.3f} 秒")
 
                 elif future == future_md_class_name:

@@ -1,17 +1,9 @@
 import itertools
-import threading
-import time
-
-from globalInfo import GlobalInfo
-from methodutil import conver_model_result_to_action
 
 
 class Environment():
-    def __init__(self, android_controller, rewordUtil):
-        self.android_controller = android_controller
-        self.rewordUtil = rewordUtil
-        self.globalInfo = GlobalInfo()
-        self.lock = threading.Lock()
+    def __init__(self):
+
 
         # Action1: 361种可能 (0: 无操作, 1-360: 滑动角度)
         action1_space = list(range(361))
@@ -45,35 +37,19 @@ class Environment():
                     action3_space.append((skill, event))
                 elif event == 1:  # 滑动
                     for angle in range(361):
-                        for distance in range(101):
-                            action3_space.append((skill, event, angle, distance))
+                        action3_space.append((skill, event, angle))
                 elif event == 2:  # 长按
                     for duration in range(501):  # 长按时间从0到500（表示0到5秒）
                         action3_space.append((skill, event, duration / 100))
 
-        print(action3_space)
+        print(len(action3_space))
 
 
         # 组合动作空间[(action1, action2，action3), .... ,(action1, action2，action3)]
-        self.action_space = list(itertools.product(action1_space, action2_space, action3_space))
+        # self.action_space = list(itertools.product(action1_space, action2_space, action3_space))
+        #
+        # self.action_space_n = len(self.action_space)
+        #
+        # print(self.action_space_n)
 
-        self.action_space_n = len(self.action_space)
-
-        print(self.action_space_n)
-
-
-def step(self, action):
-        real_action = conver_model_result_to_action(action)
-        self.android_controller.execute_actions(real_action)
-
-        next_state = self.globalInfo.get_global_frame()
-        while next_state is None:
-            time.sleep(0.01)
-            next_state = self.globalInfo.get_global_frame()
-            continue
-
-        reward, done, info = self.rewordUtil.get_reword(next_state, True)
-
-        return next_state, reward, done, info
-
-
+env = Environment()
