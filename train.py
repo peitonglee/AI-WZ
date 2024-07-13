@@ -21,7 +21,7 @@ globalInfo = GlobalInfo()
 class_names = ['started']
 start_check = OnnxRunner('models/start.onnx', classes=class_names)
 
-ppo_agent = PPO_Agent(action_dim=args.action_dim, buffer_capacity=args.buffer_capacity)
+ppo_agent = PPO_Agent()
 td3_agent = TD3_Agent(action_dim=args.action_dim, buffer_capacity=args.buffer_capacity)
 
 # 全局变量声明
@@ -120,7 +120,6 @@ while True:
 
             if len(ppo_agent.memory) > args.batch_size:
                 ppo_agent.train()
-
 
         # 保存每一局结束的reword
         return_list.append(epoch_return_total)

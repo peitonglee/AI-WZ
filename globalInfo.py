@@ -1,6 +1,8 @@
 import datetime
 import threading
 
+from memory import ReplayMemory
+
 
 def singleton(cls):
     instances = {}
@@ -15,8 +17,11 @@ def singleton(cls):
 
 @singleton
 class GlobalInfo:
-    def __init__(self):
+    def __init__(self, batch_size=64, buffer_capacity=10000):
+        self.batch_size = batch_size
         self._info = {}
+        self.ppo_memory = ReplayMemory(buffer_capacity)
+        self.td3_memory = ReplayMemory(buffer_capacity)
         self.lock = threading.Lock()
 
     def set_value(self, key, value):
@@ -39,43 +44,33 @@ class GlobalInfo:
     def set_game_end(self):
         self.set_value('start_game', False)
 
-    # -------------------------------对局时间-------------------------------------
-    def set_start_game_time(self):
-        self.set_value('game_time', datetime.datetime.now())
+    # -------------------------------ppo经验池-------------------------------------
+    def store_transition_ppo(self, *args):
+        self.ppo_memory.push(*args)
 
-    def get_game_time_pass(self):
-        game_time = self.get_value('back_home')
-        if game_time is None:
-            return 0
-
-        current_time = datetime.datetime.now()
-        elapsed_time = (current_time - game_time).total_seconds()
-        return elapsed_time
-
-    # -------------------------------回城状态-------------------------------------
-    def set_back_home_time(self):
-        self.set_value('back_home', datetime.datetime.now())
-
-    def is_back_home(self):
-        back_home = self.get_value('back_home')
-        if back_home is None:
+    def is_memory_bigger_batch_size_ppo(self):
+        if len(self.ppo_memory) < self.batch_size:
             return False
         else:
             return True
 
-    def is_back_home_over(self):
-        back_home = self.get_value('back_home')
-        if back_home is None:
-            return True
+    def random_batch_size_memory_ppo(self):
+        transitions = self.ppo_memory.sample(self.batch_size)
+        return transitions
 
-        current_time = datetime.datetime.now()
-        elapsed_time = (current_time - back_home).total_seconds()
+    # -------------------------------td3经验池-------------------------------------
+    def store_transition_td3(self, *args):
+        self.td3_memory.push(*args)
 
-        if elapsed_time > 8:
-            self.set_value('back_home', None)
-            return True
-        else:
+    def is_memory_bigger_batch_size_td3(self):
+        if len(self.td3_memory) < self.batch_size:
             return False
+        else:
+            return True
+
+    def random_batch_size_memory_td3(self):
+        transitions = self.td3_memory.sample(self.batch_size)
+        return transitions
 
     # -------------------------------state-------------------------------------
     def set_global_frame(self, globalFrame):

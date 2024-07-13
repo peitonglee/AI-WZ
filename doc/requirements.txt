@@ -5,3 +5,4 @@ win32gui
 pywin32
 keyboard
 ppocr-onnx
+uiautomator2

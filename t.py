@@ -4,7 +4,6 @@ import itertools
 class Environment():
     def __init__(self):
 
-
         # Action1: 361种可能 (0: 无操作, 1-360: 滑动角度)
         action1_space = list(range(361))
 
@@ -19,7 +18,6 @@ class Environment():
         # 召唤师技能，1技能，2技能，3技能有: 点击，滑动，长按
         # 滑动有滑动角度360度，和滑动距离 距离最大100
         # 长按有长按时间 最大5s
-
 
         action3_space = []
 
@@ -44,12 +42,12 @@ class Environment():
 
         print(len(action3_space))
 
-
         # 组合动作空间[(action1, action2，action3), .... ,(action1, action2，action3)]
         # self.action_space = list(itertools.product(action1_space, action2_space, action3_space))
         #
         # self.action_space_n = len(self.action_space)
         #
         # print(self.action_space_n)
+
 
 env = Environment()
