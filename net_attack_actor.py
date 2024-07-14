@@ -24,5 +24,5 @@ class NetAttackActor(nn.Module):
         action_type = torch.sigmoid(self.fc3(x)) * 2  # 缩放到0-2
         arg1 = torch.tanh(self.fc4(x)) * 232 + 232  # Scale to 0-464
         arg2 = torch.sigmoid(self.fc5(x)) * 99  # Scale to 0-99
-        arg3 = torch.sigmoid(self.fc6(x)) * 4  # Scale to 0-5
+        arg3 = torch.sigmoid(self.fc6(x)) * 4  # Scale to 0-4
         return attack_action, action_type, arg1, arg2, arg3

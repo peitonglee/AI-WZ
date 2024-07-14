@@ -1,69 +1,67 @@
+import math
+
 import cv2
 import numpy as np
 
-
-def cal(img):
-    # 获取图像的尺寸
-    image_height, image_width = img.shape[:2]
-
-    # 截取矩形的固定宽度和高度
-    width = image_width * 0.116
-    height = image_height * 0.024
-
-    total_area = int(width * height)
-
-    # 计算中心顶部矩形的起始点
-    # left = int(image_width * 0.568)
-    left = int(image_width * 0.57)
-    top = int(image_height * 0.019)  # 从顶部开始
-    right = int(left + width)
-    bottom = int(top + height)
-
-    # 根据计算出的坐标裁剪图像
-    cropped_img = img[top:bottom, left:right]
-
-    # 将图片从BGR转换到HSV色彩空间
-    hsv_image = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2HSV)
-
-    # 定义BGR颜色 #AF363E
-    bgr_color = np.uint8([[[62, 54, 175]]])  # 注意这里是BGR格式
-    hsv_color = cv2.cvtColor(bgr_color, cv2.COLOR_BGR2HSV)
-    hue = hsv_color[0][0][0]
-
-    # 设置颜色范围的容错率
-    tolerance = 30  # 容差值可以根据需要调整
-
-    # 定义HSV中想要提取的颜色范围
-    lower_bound = np.array([hue - tolerance, 50, 50])
-    upper_bound = np.array([hue + tolerance, 255, 255])
-
-    # 使用cv2.inRange()函数找到图像中颜色在指定范围内的区域
-    mask = cv2.inRange(hsv_image, lower_bound, upper_bound)
-
-    # 将掩码应用于原图像，只保留指定颜色的区域
-    color_segment = cv2.bitwise_and(cropped_img, cropped_img, mask=mask)
-
-    # 转成灰度图
-    gray = cv2.cvtColor(color_segment, cv2.COLOR_BGR2GRAY)
-
-    # 找到指定颜色的最右边的位置
-    rightmost_position = 0
-    for col in range(gray.shape[1]):
-        if np.any(gray[:, col] != 0):
-            rightmost_position = col
-
-    # 计算指定颜色的面积
-    area = (rightmost_position + 1) * height
-
-    print(int((area * 100) / total_area))  # 百分比计算，去掉小数部分
-
-    cv2.imshow('Image', img)
-    # 使用OpenCV显示裁剪后的图像
-    cv2.imshow('Cropped Image', gray)
-    cv2.waitKey(0)  # 等待按键
-    cv2.destroyAllWindows()  # 关闭所有OpenCV窗口
+# 读取本地图片文件
+image_path = "screenshot_2024-07-15_05-07-34.png"
+image = cv2.imread(image_path)
 
 
-# 使用OpenCV读取图像
-img = cv2.imread("H:\\video\\monster\\train2\\attackMonster_chicken\\video4_video4_frame_0004741.jpg")
-cal(img)
+def calculate_endpoint(center, radius, angle):
+    """
+    计算基于圆心、半径和角度的终点坐标。
+
+    参数:
+        center (tuple): 圆心坐标 (x, y)，通常是滑动开始的位置。
+        radius (int): 从圆心到终点的距离。
+        angle (int): 从x轴正方向顺时针旋转的角度，单位是度。
+
+    返回:
+        tuple: 终点坐标 (x, y)。
+
+    坐标系说明:
+        - 0度从x轴正方向开始（图形界面中，水平向右是x轴的正方向）。
+        - 角度沿顺时针方向增加。
+        - 90度位于y轴负方向（图形界面中，垂直向上是y轴的负方向）。
+        - 180度位于x轴负方向（向左）。
+        - 270度位于y轴正方向（图形界面中，垂直向下是y轴的正方向）。
+
+    示例:
+        为了计算从点 (100, 200) 开始，半径为 100，角度为 90度的终点位置：
+        起始点为 x轴正方向，顺时针旋转 90度，将会指向屏幕的上方，
+        结果终点坐标为 (100, 100)。
+    """
+    angle_rad = math.radians(angle)  # 将角度转换为弧度
+    x = int(center[0] + radius * math.cos(angle_rad))
+    y = int(center[1] + radius * math.sin(angle_rad))
+    return (x, y)
+
+# 检查图片是否成功加载
+if image is None:
+    print("Error: Could not open or find the image.")
+else:
+    # 获取图片的宽度和高度
+    height, width, _ = image.shape
+
+    c_x = int(width * 0.844)
+    c_y = int(height * 0.58)
+
+    # print(c_y)
+    #
+    # x, y = calculate_endpoint((c_x, c_y), 200, 0)
+
+
+    # 定义圆点的中心坐标和半径
+    center_coordinates = (c_x, c_y)
+    radius = 20
+    color = (0, 255, 0)  # 绿色
+    thickness = -1  # 填充整个圆
+
+    # 在图片上画圆点
+    cv2.circle(image, center_coordinates, radius, color, thickness)
+
+    # 显示图片
+    cv2.imshow("Image with Circle", image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
