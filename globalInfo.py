@@ -83,19 +83,3 @@ class GlobalInfo:
     def random_batch_size_memory_td3(self):
         transitions = self.td3_memory.sample(self.batch_size)
         return transitions
-
-    # -------------------------------state-------------------------------------
-    def set_global_frame(self, globalFrame):
-        self.lock.acquire()
-        try:
-            self.set_value("globalFrame", globalFrame)
-        finally:
-            self.lock.release()
-
-    def get_global_frame(self):
-        self.lock.acquire()
-        try:
-            globalFrame = self.get_value("globalFrame")
-            return globalFrame
-        finally:
-            self.lock.release()

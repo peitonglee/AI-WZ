@@ -41,20 +41,25 @@ class PPO_Agent:
         torch.save(self.critic.state_dict(), os.path.join(args.model_dir, 'ppo_critic.pth'))
 
     def select_action(self, state):
-        if random.randint(0, 100000) < 10:
-
-            # 随机生成 move_action, angle, info_action
+        if random.randint(0, 10) < 1:
+            # 随机生成 move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3
             move_action = torch.randint(0, 2, (1, 1), dtype=torch.long, device=device)  # 0 或 1
             angle = torch.randint(0, 360, (1, 1), dtype=torch.long, device=device)  # 0 到 359
             info_action = torch.randint(0, 9, (1, 1), dtype=torch.long, device=device)  # 0 到 8
+            attack_action = torch.randint(0, 11, (1, 1), dtype=torch.long, device=device)  # 0 到 10
+            action_type = torch.randint(0, 3, (1, 1), dtype=torch.long, device=device)  # 0 到 2
+            arg1 = torch.randint(0, 465, (1, 1), dtype=torch.long, device=device)  # 0 到 464
+            arg2 = torch.randint(0, 100, (1, 1), dtype=torch.long, device=device)  # 0 到 99
+            arg3 = torch.randint(0, 5, (1, 1), dtype=torch.long, device=device)  # 0 到 4
 
-            action = torch.cat((move_action, angle, info_action), dim=-1)
-            return action.cpu().data.numpy().flatten(), move_action, angle, info_action
+            action = torch.cat((move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3), dim=-1)
+            return action.cpu().data.numpy().flatten(), move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3
         else:
             tmp_state_640_640 = self.preprocess_image(state)
-            move_action, angle, info_action = self.actor(tmp_state_640_640)
-            action = torch.cat((move_action, angle, info_action), dim=-1)
-            return action.cpu().data.numpy().flatten(), move_action, angle, info_action
+            move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3 = self.actor(
+                tmp_state_640_640)
+            action = torch.cat((move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3), dim=-1)
+            return action.cpu().data.numpy().flatten(), move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3
 
     def preprocess_image(self, image, target_size=(640, 640)):
         # 调整图像大小
@@ -67,11 +72,13 @@ class PPO_Agent:
         while True:
             if not globalInfo.is_memory_bigger_batch_size_ppo():
                 time.sleep(1)
+                print("ppo training waiting data")
                 continue
 
             print("ppo training ...")
             transitions = globalInfo.random_batch_size_memory_ppo()
             batch = Transition(*zip(*transitions))
+            
             # 将 batch 中的数据转换为 PyTorch 张量
             state_batch = torch.FloatTensor(batch.state).to(device)
             action_batch = torch.FloatTensor(batch.action).to(device)
@@ -92,14 +99,16 @@ class PPO_Agent:
             # 更新 Actor 和 Critic
             for _ in range(args.ppo_epoch):
                 # 计算新的动作概率
-                move_action, angle, info_action = self.actor(state_batch)
-                new_action_probs = torch.cat((move_action, angle, info_action), dim=-1)
+                move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3 = self.actor(state_batch)
+                new_action_probs = torch.cat(
+                    (move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3), dim=-1)
 
                 # 计算旧动作概率
                 with torch.no_grad():
-                    old_move_action, old_angle, old_info_action = self.actor(state_batch)
-                    old_action_probs = torch.cat((old_move_action, old_angle, old_info_action),
-                                                 dim=-1)
+                    old_move_action, old_angle, old_info_action, old_attack_action, old_action_type, old_arg1, old_arg2, old_arg3 = self.actor(
+                        state_batch)
+                    old_action_probs = torch.cat((old_move_action, old_angle, old_info_action, old_attack_action,
+                                                  old_action_type, old_arg1, old_arg2, old_arg3), dim=-1)
 
                 # 计算概率比
                 ratio = (new_action_probs / (old_action_probs + 1e-10))
@@ -126,5 +135,5 @@ class PPO_Agent:
 
     def start_train(self):
         training_thread = threading.Thread(target=self.train)
+        training_thread.daemon = True
         training_thread.start()
-        # training_thread.join()

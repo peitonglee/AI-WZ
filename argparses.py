@@ -41,6 +41,7 @@ attack_actions_detail = {
 def get_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--device_id', type=str, default='528e7355', help="device_id")
+    parser.add_argument('--window_title', type=str, default='wzry_ai', help="device_id")
     parser.add_argument('--gamma', type=float, default=0.99, help="Discount factor")
     parser.add_argument('--tau', type=float, default=0.005, help="Target smoothing coefficient")
     parser.add_argument('--actor_lr', type=float, default=3e-4, help="Learning rate for actor")

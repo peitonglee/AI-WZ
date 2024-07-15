@@ -1,10 +1,6 @@
 import threading
 import time
 import numpy as np
-import scrcpy
-
-import argparses
-from androidController import AndroidController
 from android_tool import AndroidTool
 from getReword import GetRewordUtil
 from globalInfo import GlobalInfo
@@ -24,6 +20,7 @@ ppo_agent = PPO_Agent()
 
 rewordUtil = GetRewordUtil()
 tool = AndroidTool()
+tool.show_scrcpy()
 env = Environment(tool, rewordUtil)
 
 
@@ -35,12 +32,11 @@ def main():
 
     while True:
         # 获取当前的图像
-        state = tool.take_screenshot()
+        state = tool.screenshot_window()
         # 保证图像能正常获取
         if state is None:
             time.sleep(0.01)
             continue
-        # cv2.imwrite(f"tmp/img_0.jpg", state)
         # 初始化对局状态 对局未开始
         globalInfo.set_game_end()
         # 判断对局是否开始
@@ -56,12 +52,11 @@ def main():
             # 对局开始了，进行训练
             while globalInfo.is_start_game():
                 # 获取预测动作
-                action, move_action, angle, info_action = ppo_agent.select_action(state)
-                globalInfo.set_value("action", action)
+                action, move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3 = ppo_agent.select_action(state)
 
-                next_state, reward, done, info = env.step((move_action, angle, info_action), True)
+
+                next_state, reward, done, info = env.step((move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3))
                 print(info)
-
 
                 # 对局结束
                 if done == 1:
