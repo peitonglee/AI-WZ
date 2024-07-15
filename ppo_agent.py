@@ -114,25 +114,32 @@ class PPO_Agent:
                                                   old_action_type, old_arg1, old_arg2, old_arg3), dim=-1)
 
                 # 计算概率比
-                ratio = new_action_probs / (old_action_probs + 1e-10)
+                ratio = new_action_probs / (old_action_probs.detach() + 1e-10)
+
+                print(ratio.shape)
+                print(advantages.shape)
+                print(advantages.unsqueeze(-1))
 
                 # 计算 surrogate loss
-                surr1 = ratio * advantages
-                surr2 = torch.clamp(ratio, 1 - args.ppo_clip, 1 + args.ppo_clip) * advantages
-                actor_loss = -torch.min(surr1, surr2).mean()
-
-                # 优化 Actor 网络
-                self.optimizer.zero_grad()
-                actor_loss.backward(retain_graph=True)  # 保留计算图
-                self.optimizer.step()
+                surr1 = ratio * advantages  # 确保 advantages 与 ratio 的形状匹配
+                surr2 = torch.clamp(ratio, 1 - args.ppo_clip, 1 + args.ppo_clip) * advantages  # 截断
+                actor_loss = torch.mean(-torch.min(surr1, surr2))  # PPO损失函数
 
                 # 计算 Critic 网络的损失
-                values = self.critic(state_batch, action_batch).squeeze().clone()  # 使用 clone() 避免原地操作
-                critic_loss = F.mse_loss(values, target_values.detach())
+                values = self.critic(state_batch, action_batch)  # 使用 clone() 避免原地操作
 
-                # 优化 Critic 网络
+                critic_loss = torch.mean(
+                    F.mse_loss(values, target_values.detach()))
+
+                self.optimizer.zero_grad()
                 self.critic_optimizer.zero_grad()
+
+                # 优化 Actor 网络
+                actor_loss.backward()
+                # 优化 Critic 网络
                 critic_loss.backward()
+
+                self.optimizer.step()
                 self.critic_optimizer.step()
 
             self._save_models()

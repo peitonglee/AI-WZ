@@ -14,6 +14,36 @@ class Environment():
         self.globalInfo = GlobalInfo()
         self.lock = threading.Lock()
 
+        # # 输出，0 或 1
+        # move_action_list = list(range(2))
+        # # 输出，0 到 359
+        # angle_list = list(range(360))
+        # # 输出，0 到 8
+        # info_action_list = list(range(9))
+        # # 输出0-10
+        # attack_action_list = list(range(11))
+        # # 输出0-2
+        # action_type_list = list(range(3))
+        # # 输出0-356
+        # arg1_list = list(range(360))
+        # # 输出0-99
+        # arg2_list = list(range(100))
+        # # 输出0-4
+        # arg3_list = list(range(5))
+        #
+        # self.action_space = list(itertools.product(
+        #     move_action_list,
+        #     angle_list,
+        #     info_action_list,
+        #     attack_action_list,
+        #     action_type_list,
+        #     arg1_list,
+        #     arg2_list,
+        #     arg3_list
+        # ))
+        #
+        # print(len(self.action_space))
+        # print(self.action_space)
 
     def step(self, action):
 
@@ -42,3 +72,6 @@ class Environment():
         reward, done, info = self.rewordUtil.get_reword(next_state, True, (move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3))
 
         return next_state, reward, done, info
+
+if __name__ == '__main__':
+    Environment(None,None)
