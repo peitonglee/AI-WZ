@@ -11,9 +11,9 @@ class NetActor(nn.Module):
         super(NetActor, self).__init__()
         self.feature_extractor = NetFeature()
         self.fc1 = nn.Linear(256, 256)
-        self.fc2 = nn.Linear(256, 1)  # 分类输出，0 或 1
-        self.fc3 = nn.Linear(256, 1)  # 回归输出，0 到 359
-        self.fc4 = nn.Linear(256, 1)  # 回归输出，0 到 8
+        self.fc2 = nn.Linear(256, 1)  # 输出，0 或 1
+        self.fc3 = nn.Linear(256, 1)  # 输出，0 到 359
+        self.fc4 = nn.Linear(256, 1)  # 输出，0 到 8
         self.fc5 = nn.Linear(256, 1)  # 输出0-10
         self.fc6 = nn.Linear(256, 1)  # 输出0-2
         self.fc7 = nn.Linear(256, 1)  # 输出0-356

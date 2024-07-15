@@ -67,7 +67,7 @@ def main():
                     break
 
                 # 追加经验
-                globalInfo.store_transition_ppo(ppo_agent.preprocess_image(state), action, reward, ppo_agent.preprocess_image(next_state), done)
+                globalInfo.store_transition_ppo(state, action, reward, next_state, done)
 
                 state = next_state
 

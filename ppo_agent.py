@@ -4,6 +4,7 @@ import threading
 import time
 
 import cv2
+import numpy as np
 import torch
 from torch import optim
 
@@ -18,7 +19,7 @@ import torch.nn.functional as F
 class PPO_Agent:
     def __init__(self):
         self.actor = NetActor().to(device)
-        self.critic = NetCritic(3).to(device)  # 修改 action_dim 为 3，因为我们有三个输出
+        self.critic = NetCritic(8).to(device)  # action_dim 为 8，因为我们有8个输出
         self.optimizer = optim.Adam(self.actor.parameters(), lr=args.actor_lr)
         self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=args.critic_lr)
         self._load_models()
@@ -55,7 +56,7 @@ class PPO_Agent:
             action = torch.cat((move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3), dim=-1)
             return action.cpu().data.numpy().flatten(), move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3
         else:
-            tmp_state_640_640 = self.preprocess_image(state)
+            tmp_state_640_640 = self.preprocess_image(state).unsqueeze(0)
             move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3 = self.actor(
                 tmp_state_640_640)
             action = torch.cat((move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3), dim=-1)
@@ -66,35 +67,37 @@ class PPO_Agent:
         resized_image = cv2.resize(image, target_size)
         # 转换为张量并调整维度顺序 [height, width, channels] -> [channels, height, width]
         tensor_image = torch.from_numpy(resized_image).float().permute(2, 0, 1)
-        return tensor_image.to(device).unsqueeze(0)
+        return tensor_image.to(device)
 
     def train(self):
+        torch.autograd.set_detect_anomaly(True)
+
         while True:
             if not globalInfo.is_memory_bigger_batch_size_ppo():
                 time.sleep(1)
-                print("ppo training waiting data")
                 continue
 
             print("ppo training ...")
             transitions = globalInfo.random_batch_size_memory_ppo()
             batch = Transition(*zip(*transitions))
-            
-            # 将 batch 中的数据转换为 PyTorch 张量
-            state_batch = torch.FloatTensor(batch.state).to(device)
-            action_batch = torch.FloatTensor(batch.action).to(device)
-            reward_batch = torch.FloatTensor(batch.reward).to(device)
-            next_state_batch = torch.FloatTensor(batch.next_state).to(device)
-            done_batch = torch.FloatTensor(batch.done).to(device)
+
+            # 将 batch 中的数据转换为 PyTorch 张量，并确保图像张量的维度正确
+            state_batch = torch.stack([self.preprocess_image(state) for state in batch.state]).to(device)
+            action_batch = torch.tensor(np.array(batch.action), dtype=torch.float32).to(device)
+            reward_batch = torch.tensor(batch.reward, dtype=torch.float32).to(device)
+            next_state_batch = torch.stack([self.preprocess_image(state) for state in batch.next_state]).to(device)
+            done_batch = torch.tensor(batch.done, dtype=torch.float32).to(device)
 
             # 计算当前状态的值
             values = self.critic(state_batch, action_batch).squeeze()
 
             # 计算目标值
-            next_values = self.critic(next_state_batch, action_batch).squeeze()
+            with torch.no_grad():
+                next_values = self.critic(next_state_batch, action_batch).squeeze()
             target_values = reward_batch + args.gamma * next_values * (1 - done_batch)
 
             # 计算优势
-            advantages = target_values - values
+            advantages = (target_values - values).unsqueeze(1)  # 将 advantages 转换为二维张量以匹配 ratio 的形状
 
             # 更新 Actor 和 Critic
             for _ in range(args.ppo_epoch):
@@ -111,7 +114,7 @@ class PPO_Agent:
                                                   old_action_type, old_arg1, old_arg2, old_arg3), dim=-1)
 
                 # 计算概率比
-                ratio = (new_action_probs / (old_action_probs + 1e-10))
+                ratio = new_action_probs / (old_action_probs + 1e-10)
 
                 # 计算 surrogate loss
                 surr1 = ratio * advantages
@@ -120,10 +123,11 @@ class PPO_Agent:
 
                 # 优化 Actor 网络
                 self.optimizer.zero_grad()
-                actor_loss.backward()
+                actor_loss.backward(retain_graph=True)  # 保留计算图
                 self.optimizer.step()
 
                 # 计算 Critic 网络的损失
+                values = self.critic(state_batch, action_batch).squeeze().clone()  # 使用 clone() 避免原地操作
                 critic_loss = F.mse_loss(values, target_values.detach())
 
                 # 优化 Critic 网络

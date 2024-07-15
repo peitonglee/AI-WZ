@@ -50,7 +50,7 @@ def get_args():
     parser.add_argument('--ppo_epoch', type=int, default=10, help="Number of PPO epochs")
     parser.add_argument('--td3_delay', type=int, default=2, help="Delay for TD3 updates")
     parser.add_argument('--td3_noise', type=float, default=0.1, help="Noise for TD3 target policy smoothing")
-    parser.add_argument('--batch_size', type=int, default=64, help="Batch size for training")
+    parser.add_argument('--batch_size', type=int, default=4, help="Batch size for training")
     parser.add_argument('--buffer_capacity', type=int, default=100000, help="Replay buffer capacity")
     parser.add_argument('--min_buffer_size', type=int, default=1000, help="Minimum buffer size before training starts")
     parser.add_argument('--num_episodes', type=int, default=1000, help="Number of training episodes")
@@ -64,4 +64,4 @@ args = get_args()
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 # 全局状态
-globalInfo = GlobalInfo(buffer_capacity=args.buffer_capacity)
+globalInfo = GlobalInfo(batch_size=args.batch_size, buffer_capacity=args.buffer_capacity)
