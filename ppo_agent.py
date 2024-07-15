@@ -1,7 +1,9 @@
 import os
+import random
 import threading
 import time
 
+import cv2
 import torch
 from torch import optim
 
@@ -39,16 +41,35 @@ class PPO_Agent:
         torch.save(self.critic.state_dict(), os.path.join(args.model_dir, 'ppo_critic.pth'))
 
     def select_action(self, state):
-        state = torch.FloatTensor(state).to(device)
-        classification_output, regression_output, new_output = self.actor(state)
-        action = torch.cat((classification_output, regression_output, new_output), dim=-1)
-        return action.cpu().data.numpy().flatten()
+        if random.randint(0, 100000) < 10:
+
+            # 随机生成 move_action, angle, info_action
+            move_action = torch.randint(0, 2, (1, 1), dtype=torch.long, device=device)  # 0 或 1
+            angle = torch.randint(0, 360, (1, 1), dtype=torch.long, device=device)  # 0 到 359
+            info_action = torch.randint(0, 9, (1, 1), dtype=torch.long, device=device)  # 0 到 8
+
+            action = torch.cat((move_action, angle, info_action), dim=-1)
+            return action.cpu().data.numpy().flatten(), move_action, angle, info_action
+        else:
+            tmp_state_640_640 = self.preprocess_image(state)
+            move_action, angle, info_action = self.actor(tmp_state_640_640)
+            action = torch.cat((move_action, angle, info_action), dim=-1)
+            return action.cpu().data.numpy().flatten(), move_action, angle, info_action
+
+    def preprocess_image(self, image, target_size=(640, 640)):
+        # 调整图像大小
+        resized_image = cv2.resize(image, target_size)
+        # 转换为张量并调整维度顺序 [height, width, channels] -> [channels, height, width]
+        tensor_image = torch.from_numpy(resized_image).float().permute(2, 0, 1)
+        return tensor_image.to(device).unsqueeze(0)
 
     def train(self):
         while True:
             if not globalInfo.is_memory_bigger_batch_size_ppo():
                 time.sleep(1)
                 continue
+
+            print("ppo training ...")
             transitions = globalInfo.random_batch_size_memory_ppo()
             batch = Transition(*zip(*transitions))
             # 将 batch 中的数据转换为 PyTorch 张量
@@ -106,4 +127,4 @@ class PPO_Agent:
     def start_train(self):
         training_thread = threading.Thread(target=self.train)
         training_thread.start()
-        training_thread.join()
+        # training_thread.join()

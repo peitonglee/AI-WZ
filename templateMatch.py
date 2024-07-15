@@ -90,12 +90,13 @@ class TemplateMatcher:
             return None
 
 
-# Usage example
-template_dir = "template"
-image_path = "H:\\video\\monster\\src\\some_image.png"
-matcher = TemplateMatcher(template_dir)
+if __name__ == '__main__':
+    # Usage example
+    template_dir = "template"
+    image_path = "H:\\video\\monster\\src\\some_image.png"
+    matcher = TemplateMatcher(template_dir)
 
-image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
-matched_template = matcher.match_template(image)
+    image = cv2.imread(image_path, cv2.IMREAD_UNCHANGED)
+    matched_template = matcher.match_template(image)
 
-print(f"Matched Template: {matched_template}")
+    print(f"Matched Template: {matched_template}")

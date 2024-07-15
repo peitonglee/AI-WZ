@@ -46,17 +46,29 @@ class GlobalInfo:
 
     # -------------------------------ppo经验池-------------------------------------
     def store_transition_ppo(self, *args):
-        self.ppo_memory.push(*args)
+        self.lock.acquire()
+        try:
+            self.ppo_memory.push(*args)
+        finally:
+            self.lock.release()
 
     def is_memory_bigger_batch_size_ppo(self):
-        if len(self.ppo_memory) < self.batch_size:
-            return False
-        else:
-            return True
+        self.lock.acquire()
+        try:
+            if len(self.ppo_memory) < self.batch_size:
+                return False
+            else:
+                return True
+        finally:
+            self.lock.release()
 
     def random_batch_size_memory_ppo(self):
-        transitions = self.ppo_memory.sample(self.batch_size)
-        return transitions
+        self.lock.acquire()
+        try:
+            transitions = self.ppo_memory.sample(self.batch_size)
+            return transitions
+        finally:
+            self.lock.release()
 
     # -------------------------------td3经验池-------------------------------------
     def store_transition_td3(self, *args):

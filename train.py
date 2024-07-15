@@ -22,7 +22,7 @@ class_names = ['started']
 start_check = OnnxRunner('models/start.onnx', classes=class_names)
 
 ppo_agent = PPO_Agent()
-td3_agent = TD3_Agent(action_dim=args.action_dim, buffer_capacity=args.buffer_capacity)
+td3_agent = TD3_Agent()
 
 # 全局变量声明
 globalInfo.set_global_frame(None)
@@ -93,7 +93,7 @@ while True:
         # 对局开始了，进行训练
         while globalInfo.is_start_game():
             # 获取预测动作
-            action = ppo_agent.select_action(state)
+            action, move_action, angle, info_action = ppo_agent.select_action(state)
             globalInfo.set_value("action", action)
             # 执行动作
             next_state, reward, done, info = env.step(action)
@@ -108,18 +108,14 @@ while True:
                 break
 
             # 追加经验
-            ppo_agent.store_transition(state, action, reward, next_state, done)
-            td3_agent.store_transition(state, action, reward, next_state, done)
+            globalInfo.store_transition_ppo(state, action, reward, next_state, done)
+            globalInfo.store_transition_td3(state, action, reward, next_state, done)
 
             state = next_state
 
             epoch_return_total += reward
 
-            if len(td3_agent.memory) > args.min_buffer_size:
-                td3_agent.train()
 
-            if len(ppo_agent.memory) > args.batch_size:
-                ppo_agent.train()
 
         # 保存每一局结束的reword
         return_list.append(epoch_return_total)
