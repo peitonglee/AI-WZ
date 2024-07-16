@@ -17,7 +17,6 @@ start_check = OnnxRunner('models/start.onnx', classes=class_names)
 
 ppo_agent = PPO_Agent()
 
-
 rewordUtil = GetRewordUtil()
 tool = AndroidTool()
 tool.show_scrcpy()
@@ -52,10 +51,9 @@ def main():
             # 对局开始了，进行训练
             while globalInfo.is_start_game():
                 # 获取预测动作
-                action, move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3 = ppo_agent.select_action(state)
+                action = ppo_agent.select_action(state)
 
-
-                next_state, reward, done, info = env.step((move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3))
+                next_state, reward, done, info = env.step(action)
                 print(info)
 
                 # 对局结束
@@ -84,10 +82,10 @@ def main():
             print("对局未开始")
             time.sleep(0.1)
 
-
-
 if __name__ == '__main__':
-    ppo_agent.start_train()
+
     training_thread = threading.Thread(target=main)
     training_thread.start()
-    training_thread.join()
+
+
+    ppo_agent.start_train()

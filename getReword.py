@@ -94,7 +94,7 @@ class GetRewordUtil:
         elif status_name == "attack":
             move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3 = action
 
-            attack_action = [1,2,3,8,9,10]
+            attack_action = [1, 2, 3, 8, 9, 10]
             if move_action != 0 or attack_action in attack_action:
 
                 rewordResult = attack_reword

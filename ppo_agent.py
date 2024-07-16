@@ -19,7 +19,7 @@ import torch.nn.functional as F
 class PPO_Agent:
     def __init__(self):
         self.actor = NetActor().to(device)
-        self.critic = NetCritic(8).to(device)  # action_dim 为 8，因为我们有8个输出
+        self.critic = NetCritic().to(device)  # action_dim 为 8，因为我们有8个输出
         self.optimizer = optim.Adam(self.actor.parameters(), lr=args.actor_lr)
         self.critic_optimizer = optim.Adam(self.critic.parameters(), lr=args.critic_lr)
         self._load_models()
@@ -42,25 +42,20 @@ class PPO_Agent:
         torch.save(self.critic.state_dict(), os.path.join(args.model_dir, 'ppo_critic.pth'))
 
     def select_action(self, state):
-        if random.randint(0, 10) < 1:
-            # 随机生成 move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3
-            move_action = torch.randint(0, 2, (1, 1), dtype=torch.long, device=device)  # 0 或 1
-            angle = torch.randint(0, 360, (1, 1), dtype=torch.long, device=device)  # 0 到 359
-            info_action = torch.randint(0, 9, (1, 1), dtype=torch.long, device=device)  # 0 到 8
-            attack_action = torch.randint(0, 11, (1, 1), dtype=torch.long, device=device)  # 0 到 10
-            action_type = torch.randint(0, 3, (1, 1), dtype=torch.long, device=device)  # 0 到 2
-            arg1 = torch.randint(0, 465, (1, 1), dtype=torch.long, device=device)  # 0 到 464
-            arg2 = torch.randint(0, 100, (1, 1), dtype=torch.long, device=device)  # 0 到 99
-            arg3 = torch.randint(0, 5, (1, 1), dtype=torch.long, device=device)  # 0 到 4
+        tmp_state_640_640 = self.preprocess_image(state).unsqueeze(0)
+        move, angle, info, attack, action_type, arg1, arg2, arg3 = self.actor(tmp_state_640_640)
 
-            action = torch.cat((move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3), dim=-1)
-            return action.cpu().data.numpy().flatten(), move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3
-        else:
-            tmp_state_640_640 = self.preprocess_image(state).unsqueeze(0)
-            move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3 = self.actor(
-                tmp_state_640_640)
-            action = torch.cat((move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3), dim=-1)
-            return action.cpu().data.numpy().flatten(), move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3
+        # Sample actions based on the output distributions
+        move_action = torch.multinomial(move, 1).item()
+        angle = torch.multinomial(angle, 1).item()
+        info_action = torch.multinomial(info, 1).item()
+        attack_action = torch.multinomial(attack, 1).item()
+        action_type = torch.multinomial(action_type, 1).item()
+        arg1 = torch.multinomial(arg1, 1).item()
+        arg2 = torch.multinomial(arg2, 1).item()
+        arg3 = torch.multinomial(arg3, 1).item()
+
+        return (move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3)
 
     def preprocess_image(self, image, target_size=(640, 640)):
         # 调整图像大小
@@ -88,48 +83,65 @@ class PPO_Agent:
             next_state_batch = torch.stack([self.preprocess_image(state) for state in batch.next_state]).to(device)
             done_batch = torch.tensor(batch.done, dtype=torch.float32).to(device)
 
-            # 计算当前状态的值
-            values = self.critic(state_batch, action_batch).squeeze()
+            reward_batch = (reward_batch + 8.0) / 8.0
 
             # 计算目标值
-            with torch.no_grad():
-                next_values = self.critic(next_state_batch, action_batch).squeeze()
+            next_values = self.critic(next_state_batch)
             target_values = reward_batch + args.gamma * next_values * (1 - done_batch)
 
+            # 计算当前状态的值
+            values = self.critic(state_batch)
+
             # 计算优势
-            advantages = (target_values - values).unsqueeze(1)  # 将 advantages 转换为二维张量以匹配 ratio 的形状
+            advantages = target_values - values
 
             # 更新 Actor 和 Critic
             for _ in range(args.ppo_epoch):
                 # 计算新的动作概率
-                move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3 = self.actor(state_batch)
-                new_action_probs = torch.cat(
-                    (move_action, angle, info_action, attack_action, action_type, arg1, arg2, arg3), dim=-1)
+                move, angle, info, attack, action_type, arg1, arg2, arg3 = self.actor(state_batch)
+
+                action_dists = [
+                    torch.distributions.Categorical(move),
+                    torch.distributions.Categorical(angle),
+                    torch.distributions.Categorical(info),
+                    torch.distributions.Categorical(attack),
+                    torch.distributions.Categorical(action_type),
+                    torch.distributions.Categorical(arg1),
+                    torch.distributions.Categorical(arg2),
+                    torch.distributions.Categorical(arg3),
+                ]
+
+                new_log_probs = [dist.log_prob(action) for dist, action in zip(action_dists, action_batch.T)]
+                new_log_probs = torch.stack(new_log_probs, dim=-1).sum(dim=-1)
 
                 # 计算旧动作概率
                 with torch.no_grad():
-                    old_move_action, old_angle, old_info_action, old_attack_action, old_action_type, old_arg1, old_arg2, old_arg3 = self.actor(
+                    old_move, old_angle, old_info, old_attack, old_action_type, old_arg1, old_arg2, old_arg3 = self.actor(
                         state_batch)
-                    old_action_probs = torch.cat((old_move_action, old_angle, old_info_action, old_attack_action,
-                                                  old_action_type, old_arg1, old_arg2, old_arg3), dim=-1)
+                    old_action_dists = [
+                        torch.distributions.Categorical(old_move),
+                        torch.distributions.Categorical(old_angle),
+                        torch.distributions.Categorical(old_info),
+                        torch.distributions.Categorical(old_attack),
+                        torch.distributions.Categorical(old_action_type),
+                        torch.distributions.Categorical(old_arg1),
+                        torch.distributions.Categorical(old_arg2),
+                        torch.distributions.Categorical(old_arg3),
+                    ]
+                    old_log_probs = [dist.log_prob(action) for dist, action in zip(old_action_dists, action_batch.T)]
+                    old_log_probs = torch.stack(old_log_probs, dim=-1).sum(dim=-1)
 
-                # 计算概率比
-                ratio = new_action_probs / (old_action_probs.detach() + 1e-10)
-
-                print(ratio.shape)
-                print(advantages.shape)
-                print(advantages.unsqueeze(-1))
-
+                ratio = torch.exp(new_log_probs - old_log_probs)
                 # 计算 surrogate loss
                 surr1 = ratio * advantages  # 确保 advantages 与 ratio 的形状匹配
                 surr2 = torch.clamp(ratio, 1 - args.ppo_clip, 1 + args.ppo_clip) * advantages  # 截断
                 actor_loss = torch.mean(-torch.min(surr1, surr2))  # PPO损失函数
 
                 # 计算 Critic 网络的损失
-                values = self.critic(state_batch, action_batch)  # 使用 clone() 避免原地操作
-
-                critic_loss = torch.mean(
-                    F.mse_loss(values, target_values.detach()))
+                values = self.critic(state_batch)
+                print(values.shape)
+                print(target_values.shape)
+                critic_loss = torch.mean(F.mse_loss(values, target_values.detach()))
 
                 self.optimizer.zero_grad()
                 self.critic_optimizer.zero_grad()
@@ -145,6 +157,7 @@ class PPO_Agent:
             self._save_models()
 
     def start_train(self):
-        training_thread = threading.Thread(target=self.train)
-        training_thread.daemon = True
-        training_thread.start()
+        self.train()
+        # training_thread = threading.Thread(target=self.train)
+        # training_thread.start()
+        # training_thread.join()
