@@ -14,15 +14,14 @@ class NetActor(nn.Module):
         self.fc = nn.Linear(conv_output_size, 256)
 
         self.fc1 = nn.Linear(256, 256)
-        self.output_size = 8  # 输出维度
-        self.fc_move = torch.nn.Linear(256, 2)  # move_action_list
-        self.fc_angle = torch.nn.Linear(256, 360)  # angle_list
-        self.fc_info = torch.nn.Linear(256, 9)  # info_action_list
-        self.fc_attack = torch.nn.Linear(256, 11)  # attack_action_list
-        self.fc_action_type = torch.nn.Linear(256, 3)  # action_type_list
-        self.fc_arg1 = torch.nn.Linear(256, 360)  # arg1_list
-        self.fc_arg2 = torch.nn.Linear(256, 100)  # arg2_list
-        self.fc_arg3 = torch.nn.Linear(256, 5)  # arg3_list
+        self.fc_move = nn.Linear(256, 2)  # move_action_list
+        self.fc_angle = nn.Linear(256, 360)  # angle_list
+        self.fc_info = nn.Linear(256, 9)  # info_action_list
+        self.fc_attack = nn.Linear(256, 11)  # attack_action_list
+        self.fc_action_type = nn.Linear(256, 3)  # action_type_list
+        self.fc_arg1 = nn.Linear(256, 360)  # arg1_list
+        self.fc_arg2 = nn.Linear(256, 100)  # arg2_list
+        self.fc_arg3 = nn.Linear(256, 5)  # arg3_list
         self._initialize_weights()
 
     def _get_conv_output_size(self, height, width):

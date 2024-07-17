@@ -65,99 +65,97 @@ class PPO_Agent:
         return tensor_image.to(device)
 
     def train(self):
-        torch.autograd.set_detect_anomaly(True)
 
+        print("ppo training ...")
+        transitions = globalInfo.random_batch_size_memory_ppo()
+        batch = Transition(*zip(*transitions))
+
+        # 将 batch 中的数据转换为 PyTorch 张量，并确保图像张量的维度正确
+        state_batch = torch.stack([self.preprocess_image(state) for state in batch.state]).to(device)
+        action_batch = torch.tensor(np.array(batch.action), dtype=torch.float32).to(device)
+        reward_batch = torch.tensor(batch.reward, dtype=torch.float32).to(device)
+        next_state_batch = torch.stack([self.preprocess_image(state) for state in batch.next_state]).to(device)
+        done_batch = torch.tensor(batch.done, dtype=torch.float32).to(device)
+
+        # 计算目标值
+        next_values = self.critic(next_state_batch)
+        target_values = reward_batch + args.gamma * next_values * (1 - done_batch)
+
+        # 计算当前状态的值
+        values = self.critic(state_batch)
+
+        # 计算优势
+        advantages = target_values - values
+
+        # 更新 Actor 和 Critic
+        for _ in range(args.ppo_epoch):
+            # 计算新的动作概率
+            move, angle, info, attack, action_type, arg1, arg2, arg3 = self.actor(state_batch)
+
+            action_dists = [
+                torch.distributions.Categorical(move),
+                torch.distributions.Categorical(angle),
+                torch.distributions.Categorical(info),
+                torch.distributions.Categorical(attack),
+                torch.distributions.Categorical(action_type),
+                torch.distributions.Categorical(arg1),
+                torch.distributions.Categorical(arg2),
+                torch.distributions.Categorical(arg3),
+            ]
+
+            new_log_probs = [dist.log_prob(action) for dist, action in zip(action_dists, action_batch.T)]
+            new_log_probs = torch.stack(new_log_probs, dim=-1).sum(dim=-1)
+
+            # 计算旧动作概率
+            with torch.no_grad():
+                old_move, old_angle, old_info, old_attack, old_action_type, old_arg1, old_arg2, old_arg3 = self.actor(
+                    state_batch)
+                old_action_dists = [
+                    torch.distributions.Categorical(old_move),
+                    torch.distributions.Categorical(old_angle),
+                    torch.distributions.Categorical(old_info),
+                    torch.distributions.Categorical(old_attack),
+                    torch.distributions.Categorical(old_action_type),
+                    torch.distributions.Categorical(old_arg1),
+                    torch.distributions.Categorical(old_arg2),
+                    torch.distributions.Categorical(old_arg3),
+                ]
+                old_log_probs = [dist.log_prob(action) for dist, action in zip(old_action_dists, action_batch.T)]
+                old_log_probs = torch.stack(old_log_probs, dim=-1).sum(dim=-1)
+
+            ratio = torch.exp(new_log_probs - old_log_probs)
+            # 计算 surrogate loss
+            surr1 = ratio * advantages  # 确保 advantages 与 ratio 的形状匹配
+            surr2 = torch.clamp(ratio, 1 - args.ppo_clip, 1 + args.ppo_clip) * advantages  # 截断
+            actor_loss = torch.mean(-torch.min(surr1, surr2))  # PPO损失函数
+
+            # 计算 Critic 网络的损失
+            values = self.critic(state_batch)
+            print(values.shape)
+            print(target_values.shape)
+            critic_loss = torch.mean(F.mse_loss(values, target_values.detach()))
+
+            self.optimizer.zero_grad()
+            self.critic_optimizer.zero_grad()
+
+            # 优化 Actor 网络
+            actor_loss.backward()
+            # 优化 Critic 网络
+            critic_loss.backward()
+
+            self.optimizer.step()
+            self.critic_optimizer.step()
+
+        self._save_models()
+
+    def start_train(self):
+        # while True:
         while True:
             if not globalInfo.is_memory_bigger_batch_size_ppo():
                 time.sleep(1)
-                continue
-
-            print("ppo training ...")
-            transitions = globalInfo.random_batch_size_memory_ppo()
-            batch = Transition(*zip(*transitions))
-
-            # 将 batch 中的数据转换为 PyTorch 张量，并确保图像张量的维度正确
-            state_batch = torch.stack([self.preprocess_image(state) for state in batch.state]).to(device)
-            action_batch = torch.tensor(np.array(batch.action), dtype=torch.float32).to(device)
-            reward_batch = torch.tensor(batch.reward, dtype=torch.float32).to(device)
-            next_state_batch = torch.stack([self.preprocess_image(state) for state in batch.next_state]).to(device)
-            done_batch = torch.tensor(batch.done, dtype=torch.float32).to(device)
-
-            reward_batch = (reward_batch + 8.0) / 8.0
-
-            # 计算目标值
-            next_values = self.critic(next_state_batch)
-            target_values = reward_batch + args.gamma * next_values * (1 - done_batch)
-
-            # 计算当前状态的值
-            values = self.critic(state_batch)
-
-            # 计算优势
-            advantages = target_values - values
-
-            # 更新 Actor 和 Critic
-            for _ in range(args.ppo_epoch):
-                # 计算新的动作概率
-                move, angle, info, attack, action_type, arg1, arg2, arg3 = self.actor(state_batch)
-
-                action_dists = [
-                    torch.distributions.Categorical(move),
-                    torch.distributions.Categorical(angle),
-                    torch.distributions.Categorical(info),
-                    torch.distributions.Categorical(attack),
-                    torch.distributions.Categorical(action_type),
-                    torch.distributions.Categorical(arg1),
-                    torch.distributions.Categorical(arg2),
-                    torch.distributions.Categorical(arg3),
-                ]
-
-                new_log_probs = [dist.log_prob(action) for dist, action in zip(action_dists, action_batch.T)]
-                new_log_probs = torch.stack(new_log_probs, dim=-1).sum(dim=-1)
-
-                # 计算旧动作概率
-                with torch.no_grad():
-                    old_move, old_angle, old_info, old_attack, old_action_type, old_arg1, old_arg2, old_arg3 = self.actor(
-                        state_batch)
-                    old_action_dists = [
-                        torch.distributions.Categorical(old_move),
-                        torch.distributions.Categorical(old_angle),
-                        torch.distributions.Categorical(old_info),
-                        torch.distributions.Categorical(old_attack),
-                        torch.distributions.Categorical(old_action_type),
-                        torch.distributions.Categorical(old_arg1),
-                        torch.distributions.Categorical(old_arg2),
-                        torch.distributions.Categorical(old_arg3),
-                    ]
-                    old_log_probs = [dist.log_prob(action) for dist, action in zip(old_action_dists, action_batch.T)]
-                    old_log_probs = torch.stack(old_log_probs, dim=-1).sum(dim=-1)
-
-                ratio = torch.exp(new_log_probs - old_log_probs)
-                # 计算 surrogate loss
-                surr1 = ratio * advantages  # 确保 advantages 与 ratio 的形状匹配
-                surr2 = torch.clamp(ratio, 1 - args.ppo_clip, 1 + args.ppo_clip) * advantages  # 截断
-                actor_loss = torch.mean(-torch.min(surr1, surr2))  # PPO损失函数
-
-                # 计算 Critic 网络的损失
-                values = self.critic(state_batch)
-                print(values.shape)
-                print(target_values.shape)
-                critic_loss = torch.mean(F.mse_loss(values, target_values.detach()))
-
-                self.optimizer.zero_grad()
-                self.critic_optimizer.zero_grad()
-
-                # 优化 Actor 网络
-                actor_loss.backward()
-                # 优化 Critic 网络
-                critic_loss.backward()
-
-                self.optimizer.step()
-                self.critic_optimizer.step()
-
-            self._save_models()
-
-    def start_train(self):
-        self.train()
+            self.train()
         # training_thread = threading.Thread(target=self.train)
         # training_thread.start()
         # training_thread.join()
+
+
