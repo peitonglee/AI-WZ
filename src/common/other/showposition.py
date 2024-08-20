@@ -67,11 +67,11 @@ class ImageWidget(QWidget):
         self.setLayout(self.layout)
 
         # 如果不存在则创建 images 目录
-        if not os.path.exists('images'):
-            os.makedirs('images')
+        if not os.path.exists('../../../images'):
+            os.makedirs('../../../images')
 
         # 打开默认图片如果存在
-        default_image_path = 'images/screen.png'
+        default_image_path = '../../../images/screen.png'
         if os.path.exists(default_image_path):
             self.load_image(default_image_path)
 
@@ -107,7 +107,7 @@ class ImageWidget(QWidget):
     def capture_screenshot(self):
         device = self.deviceComboBox.currentText()
         if device:
-            local_image_path = 'images/screen.png'
+            local_image_path = '../../../images/screen.png'
             if os.path.exists(local_image_path):
                 os.remove(local_image_path)
             subprocess.run(['adb', '-s', device, 'exec-out', 'screencap -p'], stdout=open(local_image_path, 'wb'))

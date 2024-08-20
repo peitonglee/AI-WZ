@@ -1,17 +1,11 @@
-import itertools
 import threading
 import time
-
-import torch
-
-from globalInfo import GlobalInfo
 
 
 class Environment():
     def __init__(self, android_controller, rewordUtil):
         self.android_controller = android_controller
         self.rewordUtil = rewordUtil
-        self.globalInfo = GlobalInfo()
         self.lock = threading.Lock()
 
         # 输出，0 或 1

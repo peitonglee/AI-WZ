@@ -1,25 +1,20 @@
-import random
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import cv2
 import numpy as np
-import torch
 from ppocronnx import TextSystem
 
-from argparses import device
-from globalInfo import GlobalInfo
-from onnxRunner import OnnxRunner
+from src.common.argparses import args, globalInfo
+from src.common.onnxRunner import OnnxRunner
 
 
 class GetRewordUtil:
     def __init__(self):
-        self.device = device
 
-        # 全局状态
-        self.globalInfo = GlobalInfo()
         class_names = ['death']
-        self.death_check = OnnxRunner('models/death.onnx', classes=class_names)
+        death_model_path = globalInfo.getRootPath() + '\\models\\death.onnx'
+        self.death_check = OnnxRunner(death_model_path, classes=class_names)
 
     def predict(self, img):
         is_attack, rewordCount = self.calculate_attack_reword(img)

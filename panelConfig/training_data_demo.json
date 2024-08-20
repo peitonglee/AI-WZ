@@ -1,0 +1,46 @@
+[
+    {
+        "title": "DQN Loss",
+        "description": "Loss over time during DQN training",
+        "x_label": "Episodes",
+        "y_label": "Loss",
+        "x_data": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+        ],
+        "y_data": [
+            0.13354328859781117,
+            0.42184142329179797,
+            0.6416368857835698,
+            0.6539501467618096,
+            0.40698386698556055,
+            0.3348367048707418
+        ]
+    },
+    {
+        "title": "DQN Reward",
+        "description": "Reward over time during DQN training",
+        "x_label": "Episodes",
+        "y_label": "Reward",
+        "x_data": [
+            0,
+            1,
+            2,
+            3,
+            4,
+            5
+        ],
+        "y_data": [
+            0.5433491841457361,
+            8.33297432495556,
+            7.377802573061913,
+            4.474481198159469,
+            8.470923479429803,
+            2.0108800568605023
+        ]
+    }
+]

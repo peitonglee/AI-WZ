@@ -5,7 +5,7 @@ import threading
 
 from filelock import FileLock
 
-from memory import ReplayMemory
+from src.common.memory import ReplayMemory
 
 
 def singleton(cls):
@@ -107,9 +107,12 @@ class GlobalInfo:
     def update_data_file(self, new_data):
         lock = FileLock("training_data.json.lock")
 
+        curPath = self.getRootPath() + '\\panelConfig\\'
+        print(curPath)
+
         with lock:
-            if os.path.exists('training_data.json'):
-                with open('training_data.json', 'r') as file:
+            if os.path.exists(curPath + 'training_data.json'):
+                with open(curPath + 'training_data.json', 'r') as file:
                     data = json.load(file)
             else:
                 data = []
@@ -126,5 +129,13 @@ class GlobalInfo:
                 if not title_found:
                     data.append(new_plot)
 
-            with open('training_data.json', 'w') as file:
+            with open(curPath + 'training_data.json', 'w') as file:
                 json.dump(data, file, indent=4)
+
+    # 获得根路径
+    def getRootPath(self):
+        # 获取文件目录
+        curPath = os.path.abspath(os.path.dirname(__file__))
+        # 获取项目根路径，内容为当前项目的名字
+        rootPath = curPath[:curPath.find('wzry_ai') + len('wzry_ai')]
+        return rootPath

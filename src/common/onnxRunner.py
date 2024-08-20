@@ -152,7 +152,7 @@ class OnnxRunner:
 # 使用示例
 if __name__ == "__main__":
     # 使用示例
-    model_path = 'models/start.onnx'
+    model_path = '../../models/start.onnx'
     classes = ["started"]  # 添加实际的类别名称
 
     # model_path = 'yolov10b.models'

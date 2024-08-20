@@ -1,20 +1,16 @@
 import threading
 import time
-import numpy as np
-from android_tool import AndroidTool
-from argparses import args
-from dqnAgent import DQNAgent
-from getReword import GetRewordUtil
-from globalInfo import GlobalInfo
+from src.common.android_tool import AndroidTool
+from src.common.argparses import args,globalInfo
+from src.dqn.dqnAgent import DQNAgent
+from src.common.getReword import GetRewordUtil
 
-from wzry_env import Environment
-from onnxRunner import OnnxRunner
-
-# 全局状态
-globalInfo = GlobalInfo()
+from src.common.wzry_env import Environment
+from src.common.onnxRunner import OnnxRunner
 
 class_names = ['started']
-start_check = OnnxRunner('models/start.onnx', classes=class_names)
+start_model_path = globalInfo.getRootPath() + '\\models\\start.onnx'
+start_check = OnnxRunner(start_model_path, classes=class_names)
 
 rewordUtil = GetRewordUtil()
 tool = AndroidTool()

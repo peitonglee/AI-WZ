@@ -4,9 +4,9 @@ import torch.nn.functional as F
 
 
 # Actor 网络
-class NetDQN(nn.Module):
+class NetWzry(nn.Module):
     def __init__(self):
-        super(NetDQN, self).__init__()
+        super(NetWzry, self).__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=8, stride=4)
         self.conv2 = nn.Conv2d(64, 128, kernel_size=4, stride=2)
 

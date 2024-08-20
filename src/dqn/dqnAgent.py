@@ -5,9 +5,9 @@ import numpy as np
 import torch
 from torch import optim, nn
 
-from argparses import device, args, globalInfo
-from memory import Transition
-from net_actor import NetDQN
+from src.common.argparses import device, args, globalInfo
+from src.common.memory import Transition
+from src.common.netWzry import NetWzry
 
 class DQNAgent:
     def __init__(self):
@@ -25,8 +25,8 @@ class DQNAgent:
         self.steps_done = 0
         self.target_update = args.target_update
 
-        self.policy_net = NetDQN().to(self.device)
-        self.target_net = NetDQN().to(self.device)
+        self.policy_net = NetWzry().to(self.device)
+        self.target_net = NetWzry().to(self.device)
         self.optimizer = optim.Adam(self.policy_net.parameters(), lr=self.learning_rate)
         self.criterion = nn.MSELoss()
 

@@ -144,7 +144,7 @@ class TrainingPanel(QWidget):
         script_map = {
             'PPO': 'train_ppo.py',
             'TD3': 'train_td3.py',
-            'DQN': 'train_dqn.py',
+            'DQN': 'src/dqn/train.py',
             'A2C': 'train_a2c.py',
             'SAC': 'train_sac.py'
         }
@@ -169,9 +169,9 @@ class TrainingPanel(QWidget):
         lock = FileLock("training_data.json.lock", timeout=5)  # 设置锁定超时时间
         try:
             with lock:
-                if os.path.exists('training_data.json'):
+                if os.path.exists('panelConfig/training_data.json'):
                     # 打开文件并写入空列表（清空文件内容）
-                    with open('training_data.json', 'w') as file:
+                    with open('panelConfig/training_data.json', 'w') as file:
                         json.dump([], file, indent=4)
 
                     # 清除图表内容
@@ -197,8 +197,8 @@ class TrainingPanel(QWidget):
         lock = FileLock("training_data.json.lock", timeout=5)  # 设置锁定超时时间
         try:
             with lock:
-                if os.path.exists('training_data.json'):
-                    with open('training_data.json', 'r') as file:
+                if os.path.exists('panelConfig/training_data.json'):
+                    with open('panelConfig/training_data.json', 'r') as file:
                         data = json.load(file)
 
                         self.figure.clear()

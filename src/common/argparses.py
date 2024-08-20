@@ -3,7 +3,7 @@ import argparse
 
 import torch
 
-from globalInfo import GlobalInfo
+from src.common.globalInfo import GlobalInfo
 
 # 移动坐标和滑动半径
 move_actions_detail = {
@@ -39,9 +39,11 @@ attack_actions_detail = {
 
 
 def get_args():
+    default_model_path = globalInfo.getRootPath() + '\\run\\wzry_ai.pt'
     parser = argparse.ArgumentParser()
     parser.add_argument('--iphone_id', type=str, default='528e7355', help="device_id")
     parser.add_argument('--window_title', type=str, default='wzry_ai', help="device_id")
+    parser.add_argument('--model_path', type=str, default=default_model_path, help="Path to the model to load")
     parser.add_argument('--device_id', type=str, default='cuda:0', help="device_id")
     parser.add_argument('--memory_size', type=int, default=10000, help="Replay memory size")
     parser.add_argument('--batch_size', type=int, default=64, help="Batch size for training")
@@ -50,7 +52,6 @@ def get_args():
     parser.add_argument('--epsilon', type=float, default=1.0, help="Initial exploration rate")
     parser.add_argument('--epsilon_decay', type=float, default=0.995, help="Exploration rate decay")
     parser.add_argument('--epsilon_min', type=float, default=0.01, help="Minimum exploration rate")
-    parser.add_argument('--model_path', type=str, default="src/wzry_ai.pt", help="Path to the model to load")
     parser.add_argument('--num_episodes', type=int, default=10, help="Number of episodes to collect data")
     parser.add_argument('--target_update', type=int, default=10, help="Number of episodes to collect data")
 

@@ -1,9 +1,7 @@
 import random
 import time
-import json
-import os
 
-from argparses import globalInfo
+from src.common.argparses import globalInfo
 
 
 def train_dqn():

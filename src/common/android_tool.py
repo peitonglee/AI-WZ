@@ -14,12 +14,12 @@ import win32gui
 from PyQt5.QtGui import QImage
 from PyQt5.QtWidgets import QApplication
 
-from argparses import move_actions_detail, info_actions_detail, attack_actions_detail, args
+from src.common.argparses import move_actions_detail, info_actions_detail, attack_actions_detail, args, globalInfo
 
 
 class AndroidTool:
-    def __init__(self, scrcpy_dir="scrcpy-win64-v2.0"):
-        self.scrcpy_dir = scrcpy_dir
+    def __init__(self):
+        self.scrcpy_dir = globalInfo.getRootPath() + '\\scrcpy-win64-v2.0\\'
         self.device_serial = args.iphone_id
         self.actual_height, self.actual_width = self.get_device_resolution()
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=3)
@@ -34,7 +34,7 @@ class AndroidTool:
     def get_device_resolution(self):
         # 获取设备的实际分辨率
         output = subprocess.check_output(
-            [f"{self.scrcpy_dir}/adb", "-s", self.device_serial, "shell", "wm", "size"]
+            [f"{self.scrcpy_dir}adb", "-s", self.device_serial, "shell", "wm", "size"]
         ).decode('utf-8')
         resolution = output.split()[-1].split('x')
         return int(resolution[0]), int(resolution[1])
@@ -53,7 +53,7 @@ class AndroidTool:
                                                    actions_detail['radius'],
                                                    task_params['angle'])
 
-            subprocess.run([f"{self.scrcpy_dir}/adb", "-s", self.device_serial, "shell",
+            subprocess.run([f"{self.scrcpy_dir}adb", "-s", self.device_serial, "shell",
                             "input", "swipe", str(start_x), str(start_y), str(end_x), str(end_y), "500"])
 
     def execute_info(self, task_params):
@@ -64,7 +64,7 @@ class AndroidTool:
             if self._show_action_log:
                 print(actions_detail['action_name'])
             start_x, start_y = self.calculate_startpoint(actions_detail['position'])
-            subprocess.run([f"{self.scrcpy_dir}/adb", "-s", self.device_serial, "shell",
+            subprocess.run([f"{self.scrcpy_dir}adb", "-s", self.device_serial, "shell",
                             "input", "tap", str(start_x), str(start_y)])
 
     def execute_attack(self, task_params):
@@ -81,20 +81,20 @@ class AndroidTool:
                 print(actions_detail['action_name'])
             start_x, start_y = self.calculate_startpoint(actions_detail['position'])
             if action_index < 7:
-                subprocess.run([f"{self.scrcpy_dir}/adb", "-s", self.device_serial, "shell",
+                subprocess.run([f"{self.scrcpy_dir}adb", "-s", self.device_serial, "shell",
                                 "input", "tap", str(start_x), str(start_y)])
             else:
                 if action_type == 0:
-                    subprocess.run([f"{self.scrcpy_dir}/adb", "-s", self.device_serial, "shell",
+                    subprocess.run([f"{self.scrcpy_dir}adb", "-s", self.device_serial, "shell",
                                     "input", "tap", str(start_x), str(start_y)])
                 elif action_type == 1:
                     end_x, end_y = self.calculate_endpoint((start_x, start_y),
                                                            arg2,
                                                            arg1)
-                    subprocess.run([f"{self.scrcpy_dir}/adb", "-s", self.device_serial, "shell",
+                    subprocess.run([f"{self.scrcpy_dir}adb", "-s", self.device_serial, "shell",
                                     "input", "swipe", str(start_x), str(start_y), str(end_x), str(end_y), "500"])
                 else:
-                    subprocess.run([f"{self.scrcpy_dir}/adb", "-s", self.device_serial, "shell",
+                    subprocess.run([f"{self.scrcpy_dir}adb", "-s", self.device_serial, "shell",
                                     "input", "swipe", str(start_x), str(start_y), str(start_x), str(start_y),
                                     str(arg3 * 1000)])
 
@@ -112,7 +112,7 @@ class AndroidTool:
 
     def show_scrcpy(self):
         subprocess.Popen(
-            [f"{self.scrcpy_dir}/scrcpy.exe", "-s", self.device_serial, "-m", "1080", "--window-title",
+            [f"{self.scrcpy_dir}scrcpy.exe", "-s", self.device_serial, "-m", "1080", "--window-title",
              args.window_title])
 
     def action_move(self, params):
@@ -132,7 +132,7 @@ class AndroidTool:
         screenshot_filename = f"screenshot_{timestamp}.png"
 
         try:
-            result = subprocess.run([f'{self.scrcpy_dir}/adb', 'exec-out', 'screencap', '-p'], capture_output=True,
+            result = subprocess.run([f'{self.scrcpy_dir}adb', 'exec-out', 'screencap', '-p'], capture_output=True,
                                     text=False)
 
             if result.returncode == 0:
@@ -148,7 +148,7 @@ class AndroidTool:
 
     def take_screenshot(self):
         try:
-            result = subprocess.run([f'{self.scrcpy_dir}/adb', 'exec-out', 'screencap', '-p'], capture_output=True,
+            result = subprocess.run([f'{self.scrcpy_dir}adb', 'exec-out', 'screencap', '-p'], capture_output=True,
                                     text=False)
 
             if result.returncode == 0:
