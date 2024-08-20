@@ -5,6 +5,7 @@ import threading
 
 from filelock import FileLock
 
+from src.common.commonMethod import getRootPath
 from src.common.memory import ReplayMemory
 
 
@@ -107,7 +108,7 @@ class GlobalInfo:
     def update_data_file(self, new_data):
         lock = FileLock("training_data.json.lock")
 
-        curPath = self.getRootPath() + '\\panelConfig\\'
+        curPath = getRootPath() + '\\panelConfig\\'
         print(curPath)
 
         with lock:
@@ -131,11 +132,3 @@ class GlobalInfo:
 
             with open(curPath + 'training_data.json', 'w') as file:
                 json.dump(data, file, indent=4)
-
-    # 获得根路径
-    def getRootPath(self):
-        # 获取文件目录
-        curPath = os.path.abspath(os.path.dirname(__file__))
-        # 获取项目根路径，内容为当前项目的名字
-        rootPath = curPath[:curPath.find('wzry_ai') + len('wzry_ai')]
-        return rootPath

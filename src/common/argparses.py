@@ -6,6 +6,7 @@ import os
 import torch
 from filelock import FileLock
 
+from src.common.commonMethod import getRootPath
 from src.common.globalInfo import GlobalInfo
 
 
@@ -42,14 +43,6 @@ attack_actions_detail = {
     10: {'action_name': '3技能', 'position': (0.844, 0.58), 'radius': 100}
 }
 
-
-# 获得根路径
-def getRootPath():
-    # 获取文件目录
-    curPath = os.path.abspath(os.path.dirname(__file__))
-    # 获取项目根路径，内容为当前项目的名字
-    rootPath = curPath[:curPath.find('wzry_ai') + len('wzry_ai')]
-    return rootPath
 
 def get_args():
     parser = argparse.ArgumentParser()

@@ -5,7 +5,7 @@ import cv2
 import numpy as np
 from ppocronnx import TextSystem
 
-from src.common.argparses import args, globalInfo
+from src.common.commonMethod import getRootPath
 from src.common.onnxRunner import OnnxRunner
 
 
@@ -13,7 +13,7 @@ class GetRewordUtil:
     def __init__(self):
 
         class_names = ['death']
-        death_model_path = globalInfo.getRootPath() + '\\models\\death.onnx'
+        death_model_path = getRootPath() + '\\models\\death.onnx'
         self.death_check = OnnxRunner(death_model_path, classes=class_names)
 
     def predict(self, img):

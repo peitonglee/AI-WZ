@@ -1,7 +1,8 @@
 import threading
 import time
 from src.common.android_tool import AndroidTool
-from src.common.argparses import args,globalInfo
+from src.common.argparses import args, globalInfo
+from src.common.commonMethod import getRootPath
 from src.dqn.dqnAgent import DQNAgent
 from src.common.getReword import GetRewordUtil
 
@@ -9,7 +10,7 @@ from src.common.wzry_env import Environment
 from src.common.onnxRunner import OnnxRunner
 
 class_names = ['started']
-start_model_path = globalInfo.getRootPath() + '\\models\\start.onnx'
+start_model_path = getRootPath() + '\\models\\start.onnx'
 start_check = OnnxRunner(start_model_path, classes=class_names)
 
 rewordUtil = GetRewordUtil()

@@ -6,6 +6,7 @@ import torch
 from torch import optim, nn
 
 from src.common.argparses import device, args, globalInfo
+from src.common.commonMethod import getRootPath
 from src.common.memory import Transition
 from src.common.netWzry import NetWzry
 
@@ -30,7 +31,7 @@ class DQNAgent:
         self.optimizer = optim.Adam(self.policy_net.parameters(), lr=self.learning_rate)
         self.criterion = nn.MSELoss()
 
-        self.save_model_path = args.getRootPath() + '\\run\\wzry_ai.pt'
+        self.save_model_path = getRootPath() + '\\run\\wzry_ai.pt'
 
         if self.save_model_path and os.path.exists(self.save_model_path):
             self.policy_net.load_state_dict(torch.load(self.save_model_path))
@@ -106,8 +107,15 @@ class DQNAgent:
         # 计算损失
         loss = self.criterion(state_action_q_values, expected_state_action_values.unsqueeze(1))
 
-        print("loss", loss)
-
+        loss_data = {
+            'title': 'DQN Loss',
+            'description': 'Loss over time during DQN training',
+            'x_label': 'Episodes',
+            'y_label': 'Loss',
+            'x_data': [self.steps_done],
+            'y_data': [loss.item()]
+        }
+        globalInfo.update_data_file([loss_data])
         # 优化模型
         self.optimizer.zero_grad()
         loss.backward()

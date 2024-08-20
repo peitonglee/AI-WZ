@@ -14,12 +14,13 @@ import win32gui
 from PyQt5.QtGui import QImage
 from PyQt5.QtWidgets import QApplication
 
-from src.common.argparses import move_actions_detail, info_actions_detail, attack_actions_detail, args, globalInfo
+from src.common.argparses import move_actions_detail, info_actions_detail, attack_actions_detail, args
+from src.common.commonMethod import getRootPath
 
 
 class AndroidTool:
     def __init__(self):
-        self.scrcpy_dir = globalInfo.getRootPath() + '\\scrcpy-win64-v2.0\\'
+        self.scrcpy_dir = getRootPath() + '\\scrcpy-win64-v2.0\\'
         self.device_serial = args.iphone_id
         self.actual_height, self.actual_width = self.get_device_resolution()
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=3)
