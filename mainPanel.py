@@ -3,13 +3,15 @@ import os
 import json
 import subprocess
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QComboBox, \
-    QSizePolicy, QFileDialog, QTextEdit, QLineEdit
+    QSizePolicy, QFileDialog, QTextEdit, QLineEdit, QDialog
 from PyQt5.QtCore import pyqtSlot, QTimer, Qt
 from PyQt5.QtGui import QPalette, QColor
 from filelock import FileLock, Timeout
 
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
+
+from SettingsDialog import SettingsDialog
 
 
 class TrainingPanel(QWidget):
@@ -61,6 +63,11 @@ class TrainingPanel(QWidget):
         self.status_display.setReadOnly(True)
         self.set_training_status("未开始")  # 初始化状态为未开始
         control_layout.addWidget(self.status_display)
+
+        # 添加设置按钮
+        self.settings_button = QPushButton("设置")
+        self.settings_button.clicked.connect(self.open_settings_dialog)
+        control_layout.addWidget(self.settings_button)
 
         top_layout.addLayout(control_layout)
 
@@ -127,6 +134,14 @@ class TrainingPanel(QWidget):
         elif status == "训练结束":
             palette.setColor(QPalette.Base, QColor("#61c0bf"))  # 背景色设置为绿色
         self.status_display.setPalette(palette)
+
+    @pyqtSlot()
+    def open_settings_dialog(self):
+        """打开设置对话框"""
+        dialog = SettingsDialog(self)
+        if dialog.exec_() == QDialog.Accepted:
+            dialog.save_settings()
+            self.log_message(f"设置已保存")
 
     @pyqtSlot()
     def start_training(self):

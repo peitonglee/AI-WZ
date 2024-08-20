@@ -1,9 +1,14 @@
 # config.py
 import argparse
+import json
+import os
 
 import torch
+from filelock import FileLock
 
 from src.common.globalInfo import GlobalInfo
+
+
 
 # 移动坐标和滑动半径
 move_actions_detail = {
@@ -38,22 +43,63 @@ attack_actions_detail = {
 }
 
 
+# 获得根路径
+def getRootPath():
+    # 获取文件目录
+    curPath = os.path.abspath(os.path.dirname(__file__))
+    # 获取项目根路径，内容为当前项目的名字
+    rootPath = curPath[:curPath.find('wzry_ai') + len('wzry_ai')]
+    return rootPath
+
 def get_args():
-    default_model_path = globalInfo.getRootPath() + '\\run\\wzry_ai.pt'
     parser = argparse.ArgumentParser()
-    parser.add_argument('--iphone_id', type=str, default='528e7355', help="device_id")
-    parser.add_argument('--window_title', type=str, default='wzry_ai', help="device_id")
-    parser.add_argument('--model_path', type=str, default=default_model_path, help="Path to the model to load")
-    parser.add_argument('--device_id', type=str, default='cuda:0', help="device_id")
-    parser.add_argument('--memory_size', type=int, default=10000, help="Replay memory size")
-    parser.add_argument('--batch_size', type=int, default=64, help="Batch size for training")
-    parser.add_argument('--learning_rate', type=float, default=0.001, help="Learning rate")
-    parser.add_argument('--gamma', type=float, default=0.99, help="Discount factor")
-    parser.add_argument('--epsilon', type=float, default=1.0, help="Initial exploration rate")
-    parser.add_argument('--epsilon_decay', type=float, default=0.995, help="Exploration rate decay")
-    parser.add_argument('--epsilon_min', type=float, default=0.01, help="Minimum exploration rate")
-    parser.add_argument('--num_episodes', type=int, default=10, help="Number of episodes to collect data")
-    parser.add_argument('--target_update', type=int, default=10, help="Number of episodes to collect data")
+    args_config_path = getRootPath() + '\\panelConfig\\argsConfig.json'
+
+    lock = FileLock("training_data.json.lock")
+    with lock:
+        # 读取JSON文件
+        with open(args_config_path, 'r', encoding='utf-8') as file:
+            args_config = json.load(file)
+
+    for section_name, section_items in args_config.items():
+        for item_name, item_data in section_items.items():
+            key = item_data["key"]
+            value_type = item_data["type"]
+            value = item_data["value"]
+            help_text = item_data["help"]
+
+            # 将字符串类型转换为对应的Python类型
+            if value_type == "str":
+                value_type = str
+            elif value_type == "int":
+                value_type = int
+            elif value_type == "float":
+                value_type = float
+            elif value_type == "bool":
+                value_type = bool
+            else:
+                raise ValueError(f"Unsupported type: {value_type}")
+
+            parser.add_argument(key, type=value_type, default=value, help=help_text)
+
+    # # 基础环境设置
+    # parser.add_argument('--iphone_id', type=str, default='528e7355', help="device_id")
+    # parser.add_argument('--window_title', type=str, default='wzry_ai', help="device_id")
+    # parser.add_argument('--model_path', type=str, default=default_model_path, help="Path to the model to load")
+    #
+    # # 是否使用gpu
+    # parser.add_argument('--device_id', type=str, default='cuda:0', help="device_id")
+    #
+    # # 训练超参设置
+    # parser.add_argument('--memory_size', type=int, default=10000, help="Replay memory size")
+    # parser.add_argument('--batch_size', type=int, default=64, help="Batch size for training")
+    # parser.add_argument('--learning_rate', type=float, default=0.001, help="Learning rate")
+    # parser.add_argument('--gamma', type=float, default=0.99, help="Discount factor")
+    # parser.add_argument('--epsilon', type=float, default=1.0, help="Initial exploration rate")
+    # parser.add_argument('--epsilon_decay', type=float, default=0.995, help="Exploration rate decay")
+    # parser.add_argument('--epsilon_min', type=float, default=0.01, help="Minimum exploration rate")
+    # parser.add_argument('--num_episodes', type=int, default=10, help="Number of episodes to collect data")
+    # parser.add_argument('--target_update', type=int, default=10, help="Number of episodes to collect data")
 
     return parser.parse_args()
 

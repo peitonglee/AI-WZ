@@ -30,10 +30,12 @@ class DQNAgent:
         self.optimizer = optim.Adam(self.policy_net.parameters(), lr=self.learning_rate)
         self.criterion = nn.MSELoss()
 
-        if args.model_path and os.path.exists(args.model_path):
-            self.policy_net.load_state_dict(torch.load(args.model_path))
+        self.save_model_path = args.getRootPath() + '\\run\\wzry_ai.pt'
+
+        if self.save_model_path and os.path.exists(self.save_model_path):
+            self.policy_net.load_state_dict(torch.load(self.save_model_path))
             self.target_net.load_state_dict(self.policy_net.state_dict())
-            print(f"Model loaded from {args.model_path}")
+            print(f"Model loaded from {self.save_model_path}")
 
     def save_model(self, path):
         torch.save(self.policy_net.state_dict(), path)

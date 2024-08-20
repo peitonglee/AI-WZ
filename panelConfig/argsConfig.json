@@ -1,0 +1,92 @@
+{
+    "基础环境设置": {
+        "iphone_id": {
+            "key": "--iphone_id",
+            "type": "str",
+            "value": "528e7355",
+            "help": "选择Android设备",
+            "info": ""
+        },
+        "window_title": {
+            "key": "--window_title",
+            "type": "str",
+            "value": "wzry_ai",
+            "help": "显示手机窗口的名称",
+            "info": ""
+        }
+    },
+    "是否使用gpu": {
+        "device_id": {
+            "key": "--device_id",
+            "type": "str",
+            "value": "cuda:0",
+            "help": "是否使用gpu",
+            "info": ""
+        }
+    },
+    "训练超参设置": {
+        "memory_size": {
+            "key": "--memory_size",
+            "type": "int",
+            "value": 10000,
+            "help": "经验池大小",
+            "info": "Replay memory size"
+        },
+        "batch_size": {
+            "key": "--batch_size",
+            "type": "int",
+            "value": 64,
+            "help": "Batch size",
+            "info": "Batch size for training"
+        },
+        "learning_rate": {
+            "key": "--learning_rate",
+            "type": "float",
+            "value": 0.001,
+            "help": "学习率",
+            "info": "Learning rate"
+        },
+        "gamma": {
+            "key": "--gamma",
+            "type": "float",
+            "value": 0.99,
+            "help": "折扣因子",
+            "info": "Discount factor"
+        },
+        "epsilon": {
+            "key": "--epsilon",
+            "type": "float",
+            "value": 1.0,
+            "help": "初始探索率",
+            "info": "Initial exploration rate"
+        },
+        "epsilon_decay": {
+            "key": "--epsilon_decay",
+            "type": "float",
+            "value": 0.995,
+            "help": "探索率衰减因子",
+            "info": "Exploration rate decay"
+        },
+        "epsilon_min": {
+            "key": "--epsilon_min",
+            "type": "float",
+            "value": 0.01,
+            "help": "最低探索率",
+            "info": "Minimum exploration rate"
+        },
+        "num_episodes": {
+            "key": "--num_episodes",
+            "type": "int",
+            "value": 10,
+            "help": "收集数据的回合数",
+            "info": "Number of episodes to collect data"
+        },
+        "target_update": {
+            "key": "--target_update",
+            "type": "int",
+            "value": 10,
+            "help": "用于收集数据的回合数",
+            "info": "Number of episodes to collect data"
+        }
+    }
+}
